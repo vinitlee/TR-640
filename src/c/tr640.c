@@ -1,6 +1,7 @@
 #include <pebble.h>
 #include "control.h"
 #include "layers/TimeLayer.h"
+#include "persist.h"
 
 static Window *s_window;
 // static TextLayer *s_time_text_layer;
@@ -137,8 +138,8 @@ static void dpt_adjust_sec(int delta)
 
 static void dpt_light_on()
 {
-  light_enable(true);
   window_set_background_color(s_window, s_backlight_color);
+  light_enable(true);
   app_timer_register(2000, dpt_light_off, NULL);
 }
 
@@ -431,7 +432,12 @@ static void sm_button_mode(ClickRecognizerRef recognizer, void *context)
   sm_handle_button(TR_CLICK_MODE);
 }
 
-static bool sm_state_allows_repeat(TRState state)
+static bool sm_state_requires_multi_click(TRState state)
+{
+  return s_ctx.state == TR_STATE_RESET;
+}
+
+static bool sm_state_allows_repeat_click(TRState state)
 {
   return s_ctx.state == TR_STATE_EDIT_HR ||
          s_ctx.state == TR_STATE_EDIT_MIN ||
@@ -442,15 +448,62 @@ static void prv_click_config_provider(void *context)
 {
   window_single_click_subscribe(BUTTON_ID_SELECT, sm_button_mode);
   window_single_click_subscribe(BUTTON_ID_UP, sm_button_light);
-  window_single_click_subscribe(BUTTON_ID_BACK, sm_button_adjust);
 
-  if (sm_state_allows_repeat(s_ctx.state))
+  if (sm_state_requires_multi_click(s_ctx.state))
+  {
+    window_multi_click_subscribe(BUTTON_ID_BACK, 2, 0, 300, true, sm_button_adjust);
+  }
+  else
+  {
+    window_single_click_subscribe(BUTTON_ID_BACK, sm_button_adjust);
+  }
+
+  if (sm_state_allows_repeat_click(s_ctx.state))
   {
     window_single_repeating_click_subscribe(BUTTON_ID_DOWN, 150, sm_button_start);
   }
   else
   {
     window_single_click_subscribe(BUTTON_ID_DOWN, sm_button_start);
+  }
+}
+
+static void save_persistent_state(void)
+{
+  PersistedState ps = {
+      .total_hr = s_ctx.total_hr,
+      .total_min = s_ctx.total_min,
+      .total_sec = s_ctx.total_sec,
+      .current_time = s_ctx.current_time,
+      .auto_mode = s_ctx.auto_mode,
+      .state = s_ctx.state,
+  };
+  persist_write_int(PKEY_VERSION, 1);
+  persist_write_data(PKEY_APP_STATE, &ps, sizeof(ps));
+}
+static void load_persistent_state(void)
+{
+  if (!persist_exists(PKEY_APP_STATE))
+  {
+    return;
+  }
+
+  int ver = persist_read_int(PKEY_VERSION);
+  if (ver != 1)
+  {
+    return;
+  }
+
+  PersistedState ps;
+  int read_ps_size = persist_read_data(PKEY_APP_STATE, &ps, sizeof(ps));
+  if (read_ps_size == sizeof(ps))
+  {
+    s_ctx.total_hr = ps.total_hr;
+    s_ctx.total_min = ps.total_min;
+    s_ctx.total_sec = ps.total_sec;
+    s_ctx.current_time = ps.current_time;
+    s_ctx.auto_mode = ps.auto_mode;
+    s_ctx.state = ps.state;
   }
 }
 
@@ -464,12 +517,14 @@ static void sm_init_context()
   s_ctx.total_min = 5;
   s_ctx.total_sec = 0;
   s_ctx.current_time = 0;
+
+  load_persistent_state();
 }
 
 static void init_colors()
 {
   s_background_color = GColorWhite;
-  s_backlight_color = GColorOrange;
+  s_backlight_color = (GColor8){.argb = ((uint8_t)0b11111001)};
 }
 
 static void prv_window_load(Window *window)
@@ -480,15 +535,10 @@ static void prv_window_load(Window *window)
   Layer *window_layer = window_get_root_layer(window);
   GRect bounds = layer_get_bounds(window_layer);
 
-  // s_time_text_layer = text_layer_create(GRect(0, 72, bounds.size.w, 42));
-  // text_layer_set_text_alignment(s_time_text_layer, GTextAlignmentCenter);
-  // text_layer_set_font(s_time_text_layer, fonts_get_system_font(FONT_KEY_LECO_20_BOLD_NUMBERS));
-  // text_layer_set_background_color(s_time_text_layer, GColorClear);
-  // layer_add_child(window_layer, text_layer_get_layer(s_time_text_layer));
-
-  s_auto_text_layer = text_layer_create(GRect(8, 8, bounds.size.w, 20));
+  s_auto_text_layer = text_layer_create(GRect(0, 4, bounds.size.w, 20));
   text_layer_set_text(s_auto_text_layer, "AUTO");
-  text_layer_set_text_alignment(s_auto_text_layer, GTextAlignmentLeft);
+  text_layer_set_font(s_auto_text_layer, fonts_get_system_font(FONT_KEY_GOTHIC_14_BOLD));
+  text_layer_set_text_alignment(s_auto_text_layer, GTextAlignmentCenter);
   text_layer_set_background_color(s_auto_text_layer, GColorClear);
   layer_add_child(window_layer, text_layer_get_layer(s_auto_text_layer));
 
@@ -500,7 +550,7 @@ static void prv_window_load(Window *window)
 
 static void prv_window_unload(Window *window)
 {
-  // text_layer_destroy(s_time_text_layer);
+  save_persistent_state();
   text_layer_destroy(s_auto_text_layer);
   time_layer_destroy(s_time_layer);
 }
