@@ -1,11 +1,13 @@
 #include <pebble.h>
 #include "control.h"
+#include "layers/TimeLayer.h"
 
 static Window *s_window;
-static TextLayer *s_time_text_layer;
+// static TextLayer *s_time_text_layer;
 static TextLayer *s_auto_text_layer;
 static AppContext s_ctx;
 static AppTimer *s_alarm_timer;
+static TimeLayer *s_time_layer;
 
 static GColor s_background_color;
 static GColor s_backlight_color;
@@ -61,8 +63,11 @@ static void ui_update_display(void)
     mins = s_ctx.total_min;
     secs = s_ctx.total_sec;
   }
-  snprintf(s_time_buffer, sizeof(s_time_buffer), "%02d:%02d:%02d", hrs, mins, secs);
-  text_layer_set_text(s_time_text_layer, s_time_buffer);
+  // snprintf(s_time_buffer, sizeof(s_time_buffer), "%02d:%02d:%02d", hrs, mins, secs);
+  // text_layer_set_text(s_time_text_layer, s_time_buffer);
+  time_layer_set_hrs(s_time_layer, hrs);
+  time_layer_set_mins(s_time_layer, mins);
+  time_layer_set_secs(s_time_layer, secs);
 
   if (s_ctx.auto_mode)
   {
@@ -240,10 +245,13 @@ static void sm_on_enter(TRState state)
   case TR_STATE_PAUSED:
     break;
   case TR_STATE_EDIT_HR:
+    time_layer_highlight(s_time_layer, TIME_LAYER_HRS);
     break;
   case TR_STATE_EDIT_MIN:
+    time_layer_highlight(s_time_layer, TIME_LAYER_MINS);
     break;
   case TR_STATE_EDIT_SEC:
+    time_layer_highlight(s_time_layer, TIME_LAYER_SECS);
     break;
   default:
     break;
@@ -262,10 +270,13 @@ static void sm_on_exit(TRState state)
   case TR_STATE_PAUSED:
     break;
   case TR_STATE_EDIT_HR:
+    time_layer_highlight(s_time_layer, TIME_LAYER_NONE);
     break;
   case TR_STATE_EDIT_MIN:
+    time_layer_highlight(s_time_layer, TIME_LAYER_NONE);
     break;
   case TR_STATE_EDIT_SEC:
+    time_layer_highlight(s_time_layer, TIME_LAYER_NONE);
     break;
   default:
     break;
@@ -469,11 +480,11 @@ static void prv_window_load(Window *window)
   Layer *window_layer = window_get_root_layer(window);
   GRect bounds = layer_get_bounds(window_layer);
 
-  s_time_text_layer = text_layer_create(GRect(0, 72, bounds.size.w, 42));
-  text_layer_set_text_alignment(s_time_text_layer, GTextAlignmentCenter);
-  text_layer_set_font(s_time_text_layer, fonts_get_system_font(FONT_KEY_LECO_20_BOLD_NUMBERS));
-  text_layer_set_background_color(s_time_text_layer, GColorClear);
-  layer_add_child(window_layer, text_layer_get_layer(s_time_text_layer));
+  // s_time_text_layer = text_layer_create(GRect(0, 72, bounds.size.w, 42));
+  // text_layer_set_text_alignment(s_time_text_layer, GTextAlignmentCenter);
+  // text_layer_set_font(s_time_text_layer, fonts_get_system_font(FONT_KEY_LECO_20_BOLD_NUMBERS));
+  // text_layer_set_background_color(s_time_text_layer, GColorClear);
+  // layer_add_child(window_layer, text_layer_get_layer(s_time_text_layer));
 
   s_auto_text_layer = text_layer_create(GRect(8, 8, bounds.size.w, 20));
   text_layer_set_text(s_auto_text_layer, "AUTO");
@@ -481,12 +492,17 @@ static void prv_window_load(Window *window)
   text_layer_set_background_color(s_auto_text_layer, GColorClear);
   layer_add_child(window_layer, text_layer_get_layer(s_auto_text_layer));
 
+  s_time_layer = time_layer_create(grect_crop(bounds, 8));
+  layer_add_child(window_layer, s_time_layer);
+
   ui_update_display();
 }
 
 static void prv_window_unload(Window *window)
 {
-  text_layer_destroy(s_time_text_layer);
+  // text_layer_destroy(s_time_text_layer);
+  text_layer_destroy(s_auto_text_layer);
+  time_layer_destroy(s_time_layer);
 }
 
 static void prv_init(void)
