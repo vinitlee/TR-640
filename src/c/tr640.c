@@ -7,6 +7,9 @@ static TextLayer *s_auto_text_layer;
 static AppContext s_ctx;
 static AppTimer *s_alarm_timer;
 
+static GColor s_background_color;
+static GColor s_backlight_color;
+
 static const uint32_t const segments[] = {50, 50, 80};
 VibePattern vibe_alarm = {
     .durations = segments,
@@ -130,12 +133,14 @@ static void dpt_adjust_sec(int delta)
 static void dpt_light_on()
 {
   light_enable(true);
+  window_set_background_color(s_window, s_backlight_color);
   app_timer_register(2000, dpt_light_off, NULL);
 }
 
 static void dpt_light_off(void *context)
 {
   light_enable(false);
+  window_set_background_color(s_window, s_background_color);
 }
 
 static void alarm_tick(void *context)
@@ -450,9 +455,16 @@ static void sm_init_context()
   s_ctx.current_time = 0;
 }
 
+static void init_colors()
+{
+  s_background_color = GColorWhite;
+  s_backlight_color = GColorOrange;
+}
+
 static void prv_window_load(Window *window)
 {
   sm_init_context();
+  init_colors();
 
   Layer *window_layer = window_get_root_layer(window);
   GRect bounds = layer_get_bounds(window_layer);
@@ -460,11 +472,13 @@ static void prv_window_load(Window *window)
   s_time_text_layer = text_layer_create(GRect(0, 72, bounds.size.w, 42));
   text_layer_set_text_alignment(s_time_text_layer, GTextAlignmentCenter);
   text_layer_set_font(s_time_text_layer, fonts_get_system_font(FONT_KEY_LECO_20_BOLD_NUMBERS));
+  text_layer_set_background_color(s_time_text_layer, GColorClear);
   layer_add_child(window_layer, text_layer_get_layer(s_time_text_layer));
 
   s_auto_text_layer = text_layer_create(GRect(8, 8, bounds.size.w, 20));
   text_layer_set_text(s_auto_text_layer, "AUTO");
   text_layer_set_text_alignment(s_auto_text_layer, GTextAlignmentLeft);
+  text_layer_set_background_color(s_auto_text_layer, GColorClear);
   layer_add_child(window_layer, text_layer_get_layer(s_auto_text_layer));
 
   ui_update_display();
