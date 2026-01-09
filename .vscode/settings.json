@@ -1,0 +1,9 @@
+{
+    "C_Cpp.default.includePath": [
+        "~/.pebble-sdk/SDKs/4.9.77/sdk-core/pebble/emery/include",
+        "~/.pebble-sdk/SDKs/4.9.77/sdk-core/pebble/aplite/include",
+        "build/include",
+        "build/emery",
+        "build/aplite"
+    ]
+}
