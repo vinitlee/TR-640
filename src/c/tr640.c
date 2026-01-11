@@ -1,10 +1,11 @@
 #include <pebble.h>
 #include "control.h"
 #include "layers/TimeLayer.h"
+// #include "layers/EuroLayer.h"
 #include "persist.h"
 
 static Window *s_window;
-// static TextLayer *s_time_text_layer;
+static StatusBarLayer *s_status_bar_layer;
 static TextLayer *s_auto_text_layer;
 static AppContext s_ctx;
 static AppTimer *s_alarm_timer;
@@ -535,7 +536,11 @@ static void prv_window_load(Window *window)
   Layer *window_layer = window_get_root_layer(window);
   GRect bounds = layer_get_bounds(window_layer);
 
-  s_auto_text_layer = text_layer_create(GRect(0, 4, bounds.size.w, 20));
+  s_status_bar_layer = status_bar_layer_create();
+  status_bar_layer_set_colors(s_status_bar_layer, GColorClear, GColorBlack);
+  layer_add_child(window_layer, status_bar_layer_get_layer(s_status_bar_layer));
+
+  s_auto_text_layer = text_layer_create(GRect(0, 168 - 20, bounds.size.w, 20));
   text_layer_set_text(s_auto_text_layer, "AUTO");
   text_layer_set_font(s_auto_text_layer, fonts_get_system_font(FONT_KEY_GOTHIC_14_BOLD));
   text_layer_set_text_alignment(s_auto_text_layer, GTextAlignmentCenter);
@@ -545,6 +550,9 @@ static void prv_window_load(Window *window)
   s_time_layer = time_layer_create(grect_crop(bounds, 8));
   layer_add_child(window_layer, s_time_layer);
 
+  // s_euro_layer = euro_layer_create(bounds);
+  // layer_add_child(window_layer, s_euro_layer);
+
   ui_update_display();
 }
 
@@ -553,6 +561,7 @@ static void prv_window_unload(Window *window)
   save_persistent_state();
   text_layer_destroy(s_auto_text_layer);
   time_layer_destroy(s_time_layer);
+  status_bar_layer_destroy(s_status_bar_layer);
 }
 
 static void prv_init(void)

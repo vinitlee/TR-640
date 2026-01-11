@@ -11,9 +11,11 @@ Pebble Timer that mimics the Casio B640. This version aims to stick to the B640 
 ## Plan
 - [x] Basic behavior
 - [x] Persist alarm time across launches
-- [ ] Schedule alarm for when backgrounded
 - [x] Pretty time display
 - [x] Show editing digit
+- [ ] Add local time for parity with B640
+- [ ] Schedule alarm for when backgrounded
+- [ ] Implement delta-based timer + slowdown + scheduling to save operations
 - [ ] Button decorations
 - [ ] Tuned vibration pattern
 - [ ] Emery speaker support for alarm (waiting on Pebble SDK)

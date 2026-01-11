@@ -21,8 +21,7 @@ static void time_layer_update_geometry(TimeLayer *time_layer)
     GSize text_size = {.w = bounds.size.w, .h = layout_size.h};
     GPoint bounds_center = grect_center_point(&bounds);
 
-    int y_offset = -8;
-    GRect mins_rect = GRect(0, bounds_center.y - text_size.h / 2 + y_offset, text_size.w, text_size.h);
+    GRect mins_rect = GRect(0, bounds_center.y - text_size.h / 2 + data->baseline, text_size.w, text_size.h);
     GRect hrs_rect = GRect(mins_rect.origin.x, mins_rect.origin.y - text_size.h, mins_rect.size.w, mins_rect.size.h);
     GRect secs_rect = GRect(mins_rect.origin.x, mins_rect.origin.y + text_size.h, mins_rect.size.w, mins_rect.size.h);
 
@@ -57,7 +56,7 @@ TimeLayer *time_layer_create(GRect frame)
     layer_mark_dirty(time_layer);
 
     TimeLayerData *data = (TimeLayerData *)layer_get_data(time_layer);
-    data->font = fonts_get_system_font(FONT_KEY_LECO_42_NUMBERS);
+    data->font = fonts_load_custom_font(resource_get_handle(RESOURCE_ID_EUROSTYLE_BIT_42));
     data->foreground_color = GColorBlack;
     data->background_color = GColorWhite;
     data->highlight_color = GColorRed;
@@ -77,11 +76,14 @@ void time_layer_destroy(TimeLayer *time_layer)
     }
 }
 
-void time_layer_set_font(TimeLayer *time_layer, GFont font)
+void time_layer_set_font(TimeLayer *time_layer, GFont font, int baseline)
 {
     TimeLayerData *data = (TimeLayerData *)layer_get_data(time_layer);
     data->font = font;
+    data->baseline = baseline;
     time_layer_update_geometry(time_layer);
+
+    layer_mark_dirty(time_layer);
 }
 
 void time_layer_set_hrs(TimeLayer *time_layer, int val)
