@@ -11,14 +11,19 @@ static AppContext s_ctx;
 static AppTimer *s_alarm_timer;
 static TimeLayer *s_time_layer;
 
-static GColor s_background_color;
-static GColor s_backlight_color;
+// static GColor s_background_color;
+// static GColor s_backlight_color;
 
 static const uint32_t const segments[] = {50, 50, 80};
 VibePattern vibe_alarm = {
     .durations = segments,
     .num_segments = ARRAY_LENGTH(segments),
 };
+
+static GColor color_primary;
+static GColor color_secondary;
+static GColor color_accent;
+static GColor color_inactive;
 
 static char s_time_buffer[16];
 
@@ -73,14 +78,46 @@ static void ui_update_display(void)
 
   if (s_ctx.auto_mode)
   {
-    text_layer_set_text_color(s_auto_text_layer, GColorRed);
+    text_layer_set_text_color(s_auto_text_layer, color_accent);
   }
   else
   {
-    text_layer_set_text_color(s_auto_text_layer, GColorLightGray);
+    text_layer_set_text_color(s_auto_text_layer, color_inactive);
   }
 }
 
+static void apply_colors()
+{
+  window_set_background_color(s_window, color_secondary);
+  time_layer_set_colors(s_time_layer, color_primary, color_secondary, color_accent);
+  status_bar_layer_set_colors(s_status_bar_layer, GColorClear, color_primary);
+  ui_update_display();
+}
+static void backlight_colors()
+{
+  color_primary = GColorRajah;
+  color_secondary = GColorBlack;
+  color_accent = GColorOrange;
+  color_inactive = GColorOrange;
+  apply_colors();
+}
+static void normal_colors()
+{
+  color_primary = GColorBlack;
+  color_secondary = GColorWhite;
+  color_accent = GColorRed;
+  color_inactive = GColorLightGray;
+  apply_colors();
+}
+
+static void tick_timer_handler(struct tm *tick_time, TimeUnits units_changed)
+{
+  dpt_countdown_loop(NULL);
+}
+static void start_tick_timer()
+{
+  tick_timer_service_subscribe(SECOND_UNIT, tick_timer_handler);
+}
 static void dpt_countdown_loop(void *context)
 {
   if (s_ctx.state == TR_STATE_RUNNING)
@@ -95,7 +132,10 @@ static void dpt_countdown_loop(void *context)
       if (!s_ctx.auto_mode)
         sm_change_state(TR_STATE_RESET);
     }
-    s_ctx.timer = app_timer_register(1000, dpt_countdown_loop, NULL);
+  }
+  else
+  {
+    tick_timer_service_unsubscribe();
   }
 }
 
@@ -139,7 +179,8 @@ static void dpt_adjust_sec(int delta)
 
 static void dpt_light_on()
 {
-  window_set_background_color(s_window, s_backlight_color);
+  // window_set_background_color(s_window, s_backlight_color);
+  backlight_colors();
   light_enable(true);
   app_timer_register(2000, dpt_light_off, NULL);
 }
@@ -147,7 +188,8 @@ static void dpt_light_on()
 static void dpt_light_off(void *context)
 {
   light_enable(false);
-  window_set_background_color(s_window, s_background_color);
+  normal_colors();
+  // window_set_background_color(s_window, s_background_color);
 }
 
 static void alarm_tick(void *context)
@@ -188,7 +230,7 @@ static void sm_dispatch(TREvent event)
     dpt_reset_timer();
     break;
   case TR_EVENT_RUN:
-    dpt_countdown_loop(NULL);
+    start_tick_timer();
     break;
   case TR_EVENT_PAUSE:
     break;
@@ -242,7 +284,7 @@ static void sm_on_enter(TRState state)
     ui_update_display();
     break;
   case TR_STATE_RUNNING:
-    dpt_countdown_loop(NULL);
+    start_tick_timer();
     break;
   case TR_STATE_PAUSED:
     break;
@@ -390,6 +432,8 @@ static void sm_handle_button(TRClick click)
     return;
   }
 
+  // dpt_light_on();
+
   TRState next;
 
   switch (click)
@@ -407,7 +451,7 @@ static void sm_handle_button(TRClick click)
     next = sm_on_mode(s_ctx.state);
     break;
   default:
-    break;
+    return;
   }
 
   sm_change_state(next);
@@ -433,6 +477,11 @@ static void sm_button_mode(ClickRecognizerRef recognizer, void *context)
   sm_handle_button(TR_CLICK_MODE);
 }
 
+static void sm_button_dummy(ClickRecognizerRef recognizer, void *context)
+{
+  sm_handle_button(TR_CLICK_DUMMY);
+}
+
 static bool sm_state_requires_multi_click(TRState state)
 {
   return s_ctx.state == TR_STATE_RESET;
@@ -452,6 +501,7 @@ static void prv_click_config_provider(void *context)
 
   if (sm_state_requires_multi_click(s_ctx.state))
   {
+    window_single_click_subscribe(BUTTON_ID_BACK, sm_button_dummy);
     window_multi_click_subscribe(BUTTON_ID_BACK, 2, 0, 300, true, sm_button_adjust);
   }
   else
@@ -524,8 +574,12 @@ static void sm_init_context()
 
 static void init_colors()
 {
-  s_background_color = GColorWhite;
-  s_backlight_color = (GColor8){.argb = ((uint8_t)0b11111001)};
+  color_primary = GColorBlack;
+  color_secondary = GColorWhite;
+  color_accent = GColorRed;
+  color_inactive = GColorLightGray;
+  // s_background_color = GColorWhite;
+  // s_backlight_color = (GColor8){.argb = ((uint8_t)0b11111001)};
 }
 
 static void prv_window_load(Window *window)

@@ -35,6 +35,7 @@ typedef enum
     TR_CLICK_LIGHT,
     TR_CLICK_ADJUST,
     TR_CLICK_MODE,
+    TR_CLICK_DUMMY,
 } TRClick;
 
 typedef struct

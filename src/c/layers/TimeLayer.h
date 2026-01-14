@@ -37,5 +37,6 @@ void time_layer_set_font(TimeLayer *time_layer, GFont font, int offset);
 void time_layer_set_hrs(TimeLayer *time_layer, int val);
 void time_layer_set_mins(TimeLayer *time_layer, int val);
 void time_layer_set_secs(TimeLayer *time_layer, int val);
+void time_layer_set_colors(TimeLayer *time_layer, GColor foreground, GColor background, GColor highlight);
 void time_layer_zero(TimeLayer *time_layer);
 void time_layer_highlight(TimeLayer *time_layer, TimeLayerPosition pos);

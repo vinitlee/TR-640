@@ -124,10 +124,18 @@ void time_layer_set_secs(TimeLayer *time_layer, int val)
 
     layer_mark_dirty(time_layer);
 }
+void time_layer_set_colors(TimeLayer *time_layer, GColor foreground, GColor background, GColor highlight)
+{
+    TimeLayerData *data = (TimeLayerData *)layer_get_data(time_layer);
+    data->foreground_color = foreground;
+    data->background_color = background;
+    data->highlight_color = highlight;
+
+    layer_mark_dirty(time_layer);
+}
 void time_layer_zero(TimeLayer *time_layer)
 {
     TimeLayerData *data = (TimeLayerData *)layer_get_data(time_layer);
-    layer_mark_dirty(time_layer);
 
     snprintf(data->h_buff, sizeof(data->h_buff), "%02d", 0);
     snprintf(data->m_buff, sizeof(data->m_buff), "%02d", 0);
