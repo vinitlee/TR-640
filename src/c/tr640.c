@@ -14,7 +14,7 @@ static TimeLayer *s_time_layer;
 // static GColor s_background_color;
 // static GColor s_backlight_color;
 
-static const uint32_t const segments[] = {50, 50, 80};
+static const uint32_t const segments[] = {60, 60, 60, 60, 60, 60, 80};
 VibePattern vibe_alarm = {
     .durations = segments,
     .num_segments = ARRAY_LENGTH(segments),
@@ -196,10 +196,10 @@ static void alarm_tick(void *context)
 {
   if (!s_ctx.beeping)
     return;
-  // vibes_enqueue_custom_pattern(vibe_alarm);
-  vibes_double_pulse();
+  vibes_enqueue_custom_pattern(vibe_alarm);
+  // vibes_double_pulse();
 
-  s_alarm_timer = app_timer_register(300, alarm_tick, NULL);
+  s_alarm_timer = app_timer_register(1000, alarm_tick, NULL);
 }
 
 static void dpt_sound_alarm(int duration)
