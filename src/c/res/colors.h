@@ -1,0 +1,4 @@
+#define COLOR_PRIMARY GColorWhite
+#define COLOR_SECONDARY GColorArmyGreen
+#define COLOR_ACCENT GColorShockingPink
+#define COLOR_INACTIVE GColorMintGreen

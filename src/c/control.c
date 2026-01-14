@@ -1,5 +1,6 @@
 #include "control.h"
 
+// FSM
 const char *state_str(TRState state)
 {
     switch (state)
@@ -51,6 +52,23 @@ const char *event_str(TREvent event)
         return "EVENT_START_ALARM";
     case TR_EVENT_STOP_ALARM:
         return "EVENT_STOP_ALARM";
+    default:
+        return "Unknown";
+    }
+}
+
+const char *click_event_str(TREvent event)
+{
+    switch (event)
+    {
+    case TR_CLICK_START:
+        return "TR_CLICK_START";
+    case TR_CLICK_LIGHT:
+        return "TR_CLICK_LIGHT";
+    case TR_CLICK_ADJUST:
+        return "TR_CLICK_ADJUST";
+    case TR_CLICK_MODE:
+        return "TR_CLICK_MODE";
     default:
         return "Unknown";
     }

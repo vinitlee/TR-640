@@ -2,6 +2,7 @@
 
 #include <pebble.h>
 
+// FSM
 typedef enum
 {
     TR_STATE_RESET = 0,
@@ -12,6 +13,9 @@ typedef enum
     TR_STATE_EDIT_SEC,
 } TRState;
 
+const char *state_str(TRState state);
+
+// EVENTS
 typedef enum
 {
     TR_EVENT_RESET = 0,
@@ -29,6 +33,8 @@ typedef enum
     TR_EVENT_STOP_ALARM,
 } TREvent;
 
+const char *event_str(TREvent event);
+
 typedef enum
 {
     TR_CLICK_START = 0,
@@ -37,18 +43,4 @@ typedef enum
     TR_CLICK_MODE,
 } TRClick;
 
-typedef struct
-{
-    TRState state;
-    bool auto_mode;
-    bool light_on;
-    bool beeping;
-    int total_hr;
-    int total_min;
-    int total_sec;
-    int current_time;
-    AppTimer *timer;
-} AppContext;
-
-const char *state_str(TRState state);
-const char *event_str(TREvent event);
+const char *click_event_str(TREvent event);
