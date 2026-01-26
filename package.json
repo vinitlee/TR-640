@@ -28,6 +28,17 @@
           "type": "font",
           "name": "EUROSTYLE_BIT_42",
           "file": "EurostyleBit.ttf"
+        },
+        {
+          "type": "bitmap",
+          "name": "CORNERS_BASALT",
+          "file": "basalt_corners.png"
+        },
+        {
+          "type": "bitmap",
+          "name": "MENU_ICON",
+          "file": "appicon.png",
+          "menuIcon": true
         }
       ]
     }

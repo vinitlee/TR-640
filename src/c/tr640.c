@@ -11,6 +11,9 @@ static AppContext s_ctx;
 static AppTimer *s_alarm_timer;
 static TimeLayer *s_time_layer;
 
+static BitmapLayer *s_bitmap_layer;
+static GBitmap *s_bitmap;
+
 // static GColor s_background_color;
 // static GColor s_backlight_color;
 
@@ -603,6 +606,12 @@ static void prv_window_load(Window *window)
 
   s_time_layer = time_layer_create(grect_crop(bounds, 8));
   layer_add_child(window_layer, s_time_layer);
+
+  s_bitmap = gbitmap_create_with_resource(RESOURCE_ID_CORNERS_BASALT);
+  s_bitmap_layer = bitmap_layer_create(bounds);
+  bitmap_layer_set_compositing_mode(s_bitmap_layer, GCompOpSet);
+  bitmap_layer_set_bitmap(s_bitmap_layer, s_bitmap);
+  layer_add_child(window_layer, bitmap_layer_get_layer(s_bitmap_layer));
 
   // s_euro_layer = euro_layer_create(bounds);
   // layer_add_child(window_layer, s_euro_layer);
