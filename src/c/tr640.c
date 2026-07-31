@@ -14,10 +14,13 @@ static TimeLayer *s_time_layer;
 static BitmapLayer *s_bitmap_layer;
 static GBitmap *s_bitmap;
 
+static GDrawCommandImage *s_corners_image;
+static Layer *s_corner_canvas_layer;
+
 // static GColor s_background_color;
 // static GColor s_backlight_color;
 
-static const uint32_t const segments[] = {60, 60, 60, 60, 60, 60, 80};
+static const uint32_t segments[] = {60, 60, 60, 60, 60, 60, 80};
 VibePattern vibe_alarm = {
     .durations = segments,
     .num_segments = ARRAY_LENGTH(segments),
@@ -337,8 +340,10 @@ static TRState sm_on_start(TRState s)
   case TR_STATE_RESET:
     return TR_STATE_RUNNING;
   case TR_STATE_RUNNING:
+    speaker_play_tone(2400, 30, 40, SpeakerWaveformSquare);
     return TR_STATE_PAUSED;
   case TR_STATE_PAUSED:
+    speaker_play_tone(3600, 30, 40, SpeakerWaveformSquare);
     return TR_STATE_RUNNING;
   case TR_STATE_EDIT_HR:
     sm_dispatch(TR_EVENT_INC_HR);
@@ -472,11 +477,13 @@ static void sm_button_light(ClickRecognizerRef recognizer, void *context)
 
 static void sm_button_adjust(ClickRecognizerRef recognizer, void *context)
 {
+  speaker_play_tone(4800, 30, 40, SpeakerWaveformSquare);
   sm_handle_button(TR_CLICK_ADJUST);
 }
 
 static void sm_button_mode(ClickRecognizerRef recognizer, void *context)
 {
+  speaker_play_tone(3600, 30, 40, SpeakerWaveformSquare);
   sm_handle_button(TR_CLICK_MODE);
 }
 
@@ -585,6 +592,11 @@ static void init_colors()
   // s_backlight_color = (GColor8){.argb = ((uint8_t)0b11111001)};
 }
 
+static void corner_update_proc(Layer *canvas_layer, GContext *ctx)
+{
+  gdraw_command_image_draw(ctx, s_corners_image, GPoint(0, 0));
+}
+
 static void prv_window_load(Window *window)
 {
   sm_init_context();
@@ -597,7 +609,7 @@ static void prv_window_load(Window *window)
   status_bar_layer_set_colors(s_status_bar_layer, GColorClear, GColorBlack);
   layer_add_child(window_layer, status_bar_layer_get_layer(s_status_bar_layer));
 
-  s_auto_text_layer = text_layer_create(GRect(0, 168 - 20, bounds.size.w, 20));
+  s_auto_text_layer = text_layer_create(GRect(0, bounds.size.h - 20, bounds.size.w, 20));
   text_layer_set_text(s_auto_text_layer, "AUTO");
   text_layer_set_font(s_auto_text_layer, fonts_get_system_font(FONT_KEY_GOTHIC_14_BOLD));
   text_layer_set_text_alignment(s_auto_text_layer, GTextAlignmentCenter);
@@ -607,11 +619,28 @@ static void prv_window_load(Window *window)
   s_time_layer = time_layer_create(grect_crop(bounds, 8));
   layer_add_child(window_layer, s_time_layer);
 
-  s_bitmap = gbitmap_create_with_resource(RESOURCE_ID_CORNERS_BASALT);
+  switch (PBL_PLATFORM_TYPE_CURRENT)
+  {
+  case PlatformTypeBasalt:
+    s_bitmap = gbitmap_create_with_resource(RESOURCE_ID_CORNERS_BASALT);
+    break;
+  case PlatformTypeEmery:
+    s_bitmap = gbitmap_create_with_resource(RESOURCE_ID_CORNERS_EMERY);
+    break;
+
+  default:
+    break;
+  }
+
   s_bitmap_layer = bitmap_layer_create(bounds);
   bitmap_layer_set_compositing_mode(s_bitmap_layer, GCompOpSet);
   bitmap_layer_set_bitmap(s_bitmap_layer, s_bitmap);
   layer_add_child(window_layer, bitmap_layer_get_layer(s_bitmap_layer));
+
+  // s_corners_image = gdraw_command_image_create_with_resource(RESOURCE_ID_CORNERS_BASALT_1_PDC);
+  // s_corner_canvas_layer = layer_create(bounds);
+  // layer_set_update_proc(s_corner_canvas_layer, corner_update_proc);
+  // layer_add_child(window_layer, s_corner_canvas_layer);
 
   // s_euro_layer = euro_layer_create(bounds);
   // layer_add_child(window_layer, s_euro_layer);
@@ -625,6 +654,8 @@ static void prv_window_unload(Window *window)
   text_layer_destroy(s_auto_text_layer);
   time_layer_destroy(s_time_layer);
   status_bar_layer_destroy(s_status_bar_layer);
+  layer_destroy(s_corner_canvas_layer);
+  gdraw_command_image_destroy(s_corners_image);
 }
 
 static void prv_init(void)
@@ -637,6 +668,8 @@ static void prv_init(void)
                                        });
   const bool animated = true;
   window_stack_push(s_window, animated);
+
+  speaker_play_tone(2400, 30, 40, SpeakerWaveformSquare);
 }
 
 static void prv_deinit(void)

@@ -36,6 +36,21 @@
         },
         {
           "type": "bitmap",
+          "name": "CORNERS_EMERY",
+          "file": "emery_corners.png"
+        },
+        {
+          "type": "raw",
+          "name": "CORNERS_BASALT_1_PDC",
+          "file": "basalt_corners_1.pdc"
+        },
+        {
+          "type": "raw",
+          "name": "CORNERS_BASALT_2_PDC",
+          "file": "basalt_corners_2.pdc"
+        },
+        {
+          "type": "bitmap",
           "name": "MENU_ICON",
           "file": "appicon.png",
           "menuIcon": true
